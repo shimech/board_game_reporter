@@ -4,7 +4,6 @@ sys.path.append(os.getcwd())
 
 import gspread
 from utils import Utils
-from models.googlespreadsheet_information import WingspanSheetInformation
 from models.wingspan.wingspan_player import WingspanPlayer
 
 
@@ -14,15 +13,16 @@ class WingspanReportManager:
     """
     MAX_NUM_PLAYER = 30
 
-    def wingspan_players(self) -> list:
+    def wingspan_players(self, workbook: gspread.models.Spreadsheet) -> list:
         """
         すべてのプレイヤの情報を取得
+        @param workbook: ワークブックインスタンス
         @return players: すべてのプレイヤリスト
         """
         year, month = Utils.target_year_and_month()
         sheet_name = "{}/{:02}".format(year, month)
         try:
-            worksheet = Utils.get_worksheet(WingspanSheetInformation.WORKBOOK, sheet_name)
+            worksheet = Utils.get_worksheet(workbook, sheet_name)
             players = self.init_players(worksheet)
             players = self.get_result_of_players(players, worksheet)
             players = self.make_messages(players)
@@ -74,8 +74,3 @@ class WingspanReportManager:
             _ = player.make_message()
         return players
 
-
-if __name__ == "__main__":
-    players = WingspanReportManager().wingspan_players()
-    for player in players:
-        print(player.message)

@@ -1,14 +1,12 @@
 import sys
 from datetime import datetime
-from time import sleep
 from slacker import Slacker
 from slackbot_settings import SlackbotSettings
 from utils import Utils
+from enums import BoardGameEnum
+from models.googlespreadsheet_manager import GoogleSpreadSheetManager
 from models.reporters import CatanReporter
 from models.reporters import WingspanReporter
-
-
-SLEEP_TIME_SEC = 60
 
 
 def main() -> None:
@@ -20,10 +18,12 @@ def main() -> None:
     # CyberLabワークスペースのチャンネル設定
     cyberlab_channel = SlackbotSettings.CHANNEL
     argument = None  # オプション
+    # オプションが付加されていた場合、その内容によってポストするチャンネルを切り替える
     if len(sys.argv) >= 2:
         argument = sys.argv[1]
         if argument in ["-t", "--test", "-d", "--debug"]:
             cyberlab_channel = SlackbotSettings.DEBUG_CHANNEL
+    # オプションがなく、本番チャンネルにポストしようとする場合の確認
     if cyberlab_channel == SlackbotSettings.CHANNEL and argument not in ["-y", "--yes"]:
         is_continue = input("Post to Channel: {}. Is it OK? [y/n] >> ".format(SlackbotSettings.CHANNEL))
         if is_continue in ["y", "yes"]:
@@ -32,52 +32,38 @@ def main() -> None:
             cyberlab_channel = SlackbotSettings.DEBUG_CHANNEL
             print("Changed Channel to {}".format(SlackbotSettings.DEBUG_CHANNEL))
 
-    # CATANレポートの取得
-    catan_report = CatanReporter.make_report()
-    print("Made CATAN report successfully.")
-
-    sleep(SLEEP_TIME_SEC)
-
-    # WINGSPANレポートの取得
-    wingspan_report = WingspanReporter.make_report()
-    print("Made WINGSPAN report successfully.")
-
-    # CyberLabにメッセージを投稿
+    # ワークスペースの設定
     cyberlab_slacker = Slacker(SlackbotSettings.API_TOKEN)
-    # CATANのレポート
-    cyberlab_slacker.chat.post_message(
-        cyberlab_channel,
-        catan_report,
-    )
-    # WINGSPANのレポート
-    cyberlab_slacker.chat.post_message(
-        cyberlab_channel,
-        wingspan_report,
-    )
-
-
-    # 個人ワークスペースにメッセージを投稿
     my_slacker = Slacker(SlackbotSettings.MY_API_TOKEN)
-    # CATANのレポート
-    my_slacker.chat.post_message(
-        SlackbotSettings.MY_CHANNEL,
-        catan_report,
-    )
-    # WINGSPANのレポート
-    my_slacker.chat.post_message(
-        SlackbotSettings.MY_CHANNEL,
-        wingspan_report,
-    )
 
-    # 標準出力
-    print("---- CATAN -----")
-    print(catan_report)
-    print("----------------")
+    for board_game in BoardGameEnum:
+        # ワークブックにアクセス
+        workbook = GoogleSpreadSheetManager.get_workbook(board_game.spreadsheet_key)
+        # レポートを取得
+        report = board_game.reporter.make_report(workbook)
+        print("Made {} report successfully.".format(board_game.name))
 
-    print("--- WINGSPAN ---")
-    print(wingspan_report)
-    print("----------------")
-    print("\n")
+        # レポートをCyberLabと個人ワークスペースにポスト
+        post_message(cyberlab_slacker, cyberlab_channel, report)
+        post_message(my_slacker, SlackbotSettings.MY_CHANNEL, report)
+
+        # 標準出力
+        print("----- {} -----".format(board_game.name))
+        print(report)
+        print("\n")
+
+
+def post_message(slacker: Slacker, channel: str, message: str) -> None:
+    """
+    メッセージをチャンネルにポスト
+    @param slacker: ポストするワークスペース
+    @param channel: ポストするチャンネル
+    @param message: ポストするメッセージ
+    """
+    slacker.chat.post_message(
+        channel,
+        message
+    )
 
 
 if __name__ == "__main__":
