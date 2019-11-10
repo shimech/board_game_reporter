@@ -1,8 +1,6 @@
 from enum import Enum
 from models.reporters import CatanReporter
 from models.reporters import WingspanReporter
-from models.catan.catan_report_manager import CatanReportManager
-from models.wingspan.wingspan_report_manager import WingspanReportManager
 
 
 class BoardGameEnum(Enum):
