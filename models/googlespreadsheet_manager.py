@@ -8,8 +8,8 @@ class GoogleSpreadSheetManager:
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
     ]
-    BOARD_GAME_REPORTER_PATH = "TODO: このアプリケーションのルートパス"
-    JSON_PATH = os.path.join(BOARD_GAME_REPORTER_PATH, "models/Google APIのJSONファイル")
+    BOARD_GAME_REPORTER_PATH = "TODO: アプリケーションのルートパス"
+    JSON_PATH = os.path.join(BOARD_GAME_REPORTER_PATH, "models/TODO: Google APIのJSONファイル")
     CREDENTIALS = ServiceAccountCredentials.from_json_keyfile_name(JSON_PATH, SCOPE)
     GC = gspread.authorize(CREDENTIALS)
 

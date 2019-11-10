@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+from time import sleep
 from slacker import Slacker
 from slackbot_settings import SlackbotSettings
 from utils import Utils
@@ -7,6 +8,9 @@ from enums import BoardGameEnum
 from models.googlespreadsheet_manager import GoogleSpreadSheetManager
 from models.reporters import CatanReporter
 from models.reporters import WingspanReporter
+
+
+SLEEP_TIME_SEC = 1
 
 
 def main() -> None:
@@ -38,7 +42,9 @@ def main() -> None:
 
     for board_game in BoardGameEnum:
         # ワークブックにアクセス
+        # その後、SLEEP_TIME_SEC [sec]のsleep
         workbook = GoogleSpreadSheetManager.get_workbook(board_game.spreadsheet_key)
+        sleep(SLEEP_TIME_SEC)
         # レポートを取得
         report = board_game.reporter.make_report(workbook)
         print("Made {} report successfully.".format(board_game.name))
